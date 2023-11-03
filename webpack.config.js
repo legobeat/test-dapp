@@ -1,35 +1,56 @@
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { ProvidePlugin } = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
 const DIST = path.resolve(__dirname, 'dist');
 
 module.exports = {
+  resolve: {
+    fallback: {
+      assert: false,
+      stream: false,
+    },
+  },
   devtool: 'eval-source-map',
   mode: 'development',
-  entry: './src/index.js',
+  entry: {
+    main: './src/index.js',
+    request: './src/request.js',
+  },
   output: {
-    filename: 'bundle.js',
     path: DIST,
     publicPath: DIST,
   },
   devServer: {
-    contentBase: DIST,
+    client: {
+      // This disables the error / warning overlay, which is distracting during
+      // local development of the test dapp.
+      overlay: false,
+    },
+    devMiddleware: {
+      writeToDisk: true,
+    },
     port: 9011,
-    writeToDisk: true,
+    static: {
+      directory: DIST,
+    },
   },
   plugins: [
+    new ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
 
     // for build scripts
     new CopyPlugin({
       patterns: [
         {
-          flatten: true,
           from: './src/*',
           globOptions: {
             ignore: ['**/*.js'],
           },
+          to: '[name][ext]',
         },
       ],
     }),
